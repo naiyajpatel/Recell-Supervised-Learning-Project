@@ -1,0 +1,672 @@
+
+
+## Importing necessary libraries
+"""
+
+# Installing the libraries with the specified version.
+# uncomment and run the following line if Google Colab is being used
+# !pip install scikit-learn==1.2.2 seaborn==0.13.1 matplotlib==3.7.1 numpy==1.25.2 pandas==1.5.3 -q --user
+
+# Installing the libraries with the specified version.
+# uncomment and run the following lines if Jupyter Notebook is being used
+# !pip install scikit-learn==1.2.2 seaborn==0.11.1 matplotlib==3.3.4 numpy==1.24.3 pandas==1.5.2 -q --user
+
+"""**Note**: *After running the above cell, kindly restart the notebook kernel and run all cells sequentially from the start again.*"""
+
+# Commented out IPython magic to ensure Python compatibility.
+# importing libraries for data analyzing in python
+import numpy as np
+import pandas as pd
+
+# Libraries to help with data visualization
+import matplotlib.pyplot as plt
+import seaborn as sns
+# %matplotlib inline
+
+# split the data into train and test
+from sklearn.model_selection import train_test_split
+
+# to build linear regression_model
+from sklearn.linear_model import LinearRegression
+
+# to check model performance
+from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
+
+# to build linear regression_model using statsmodels
+import statsmodels.api as sm
+
+# to compute VIF
+from statsmodels.stats.outliers_influence import variance_inflation_factor
+
+"""## Loading the dataset"""
+
+# giving colab access to drive
+from google.colab import drive
+drive.mount('/content/drive')
+
+# allocating path for file
+data = pd.read_csv('/content/drive/MyDrive/used_device_data.csv')
+
+# viewing first five rows of data
+data.head()
+
+"""## Data Overview
+
+- Observations
+- Sanity checks
+"""
+
+# finding number of rows and columns
+data.shape
+
+# finding data type of each column
+data.info()
+
+# finding description of whole data
+data.describe(include='all')
+
+# last five rows of data
+data.tail()
+
+# finding duplicated value if any
+data.duplicated().sum()
+
+# finding null values if any
+data.isnull().sum()
+
+# finding data types of columns
+data.dtypes
+
+"""Replacing null values with median value of the column: null values can be replaced with median when there is presence of continuous numerical value."""
+
+# finding unique values of main_camera_mp column
+data['main_camera_mp'].unique()
+
+# finding median of column
+data['main_camera_mp'].median()
+
+# replacing the null values of column with median of the column
+data['main_camera_mp'] = data['main_camera_mp'].fillna(data['main_camera_mp'].median())
+
+# finding null values after replacement
+data['main_camera_mp'].isnull().sum()
+
+# unique values of columns
+data['selfie_camera_mp'].unique()
+
+# finding median of column
+data['selfie_camera_mp'].median()
+
+# replacing null with median
+data['selfie_camera_mp'] = data['selfie_camera_mp'].fillna(data['selfie_camera_mp'].median())
+
+# finding null after replacement
+data['selfie_camera_mp'].isnull().sum()
+
+# replacing null value with median of the column int_memory
+data['int_memory'].median()
+
+data['int_memory'] = data['int_memory'].fillna(data['int_memory'].median())
+
+data['int_memory'].isnull().sum()
+
+# replacing null value with median value of the column ram
+data['ram'].median()
+
+data['ram'] = data['ram'].fillna(data['ram'].median())
+
+data['ram'].isnull().sum()
+
+# replacing null value with median value of the column battery
+data['battery'].median()
+
+data['battery'] = data['battery'].fillna(data['battery'].median())
+
+data['battery'].isnull().sum()
+
+# replacing null value with median value of the column weight
+data['weight'].median()
+
+data['weight'] = data['weight'].fillna(data['weight'].median())
+
+data['weight'].isnull().sum()
+
+"""## Exploratory Data Analysis (EDA)
+
+- EDA is an important part of any project involving data.
+- It is important to investigate and understand the data better before building a model with it.
+- A few questions have been mentioned below which will help you approach the analysis in the right manner and generate insights from the data.
+- A thorough analysis of the data, in addition to the questions mentioned below, should be done.
+
+**Questions**:
+
+1. What does the distribution of normalized used device prices look like?
+2. What percentage of the used device market is dominated by Android devices?
+3. The amount of RAM is important for the smooth functioning of a device. How does the amount of RAM vary with the brand?
+4. A large battery often increases a device's weight, making it feel uncomfortable in the hands. How does the weight vary for phones and tablets offering large batteries (more than 4500 mAh)?
+5. Bigger screens are desirable for entertainment purposes as they offer a better viewing experience. How many phones and tablets are available across different brands with a screen size larger than 6 inches?
+6. A lot of devices nowadays offer great selfie cameras, allowing us to capture our favorite moments with loved ones. What is the distribution of devices offering greater than 8MP selfie cameras across brands?
+7. Which attributes are highly correlated with the normalized price of a used device?
+
+**Univariate Analysis**
+"""
+
+# univariate analysis of os
+sns.histplot(data=data, x='os');
+
+"""**What does the distribution of normalized used device prices look like?:**"""
+
+# finding the proportion of each os in data
+data['os'].value_counts(normalize=True)
+
+# univariate analysis of screen_size
+sns.boxplot(data=data, x='screen_size');
+
+# univariate analysis of 4g
+sns.displot(data=data, x='4g');
+
+# univariate analysis of 5g
+sns.displot(data=data, x='5g');
+
+# univariate analysis of main_camera_mp
+sns.boxplot(data=data, x='main_camera_mp');
+
+# univariate analysis of selfie_camera_mp
+sns.boxplot(data=data, x='selfie_camera_mp');
+
+# univariate analysis of int_memory
+sns.boxplot(data=data, x='int_memory');
+
+# univariate analysis of ram
+sns.boxplot(data=data, x='ram');
+
+# univariate analysis of battery
+sns.boxplot(data=data, x='battery');
+
+# univariate analysis of weight
+sns.boxplot(data=data, x='weight');
+
+# univariate analysis of release_year
+sns.boxplot(data=data, x='release_year');
+
+# univariate analysis of days_used
+sns.boxplot(data=data, x='days_used');
+
+# univariate analysis of normalized_used_price
+sns.histplot(data=data, x='normalized_used_price', kde=True);
+
+# univariate analysis of normalized_new_price
+sns.boxplot(data=data, x='normalized_new_price');
+
+"""Bivariate Analysis"""
+
+# bivariate analysis of all numerical columns via heat map
+column_list = data.select_dtypes(include=np.number).columns.tolist()
+sns.heatmap(data[column_list].corr(), annot=True, cmap='coolwarm', vmin=-1, vmax=1);
+
+"""**The amount of RAM is important for the smooth functioning of a device. How does the amount of RAM vary with the brand?**"""
+
+# bivariate analysis of ram and brand_name
+sns.boxplot(data=data, x='ram', y='brand_name')
+plt.xticks(rotation=90);
+
+"""**A large battery often increases a device's weight, making it feel uncomfortable in the hands. How does the weight vary for phones and tablets offering large batteries (more than 4500 mAh)?**"""
+
+# fltering data with battery more than 4500mAh
+filtered_data = data[data['battery']>4500]
+
+# bivariate analyis of filtered data between column battery and weight
+sns.scatterplot(data=filtered_data, x='battery', y='weight', s=100);
+
+"""**Bigger screens are desirable for entertainment purposes as they offer a better viewing experience. How many phones and tablets are available across different brands with a screen size larger than 6 inches?**"""
+
+# filtering data with screen size larger than 6
+filtered_screen_size = data[data['screen_size']>6]
+
+# finding tthe relation between bran_name and screen_size after filtering the data
+sns.scatterplot(data=filtered_screen_size, x='brand_name', y='screen_size', s=100)
+plt.xticks(rotation=90);
+
+# finding the size of each brand_name column of filtered data
+device_count_by_brand = filtered_screen_size.groupby('brand_name').size()
+
+device_count_by_brand
+
+"""**A lot of devices nowadays offer great selfie cameras, allowing us to capture our favorite moments with loved ones. What is the distribution of devices offering greater than 8MP selfie cameras across brands?**"""
+
+# filtering data with selfie_camera_mp greater than 8
+filtered_selfie_camera = data[data['selfie_camera_mp']>8]
+
+# comparing brand_name with selfie_camera_mp after filtering the data
+sns.scatterplot(data=filtered_selfie_camera, x='brand_name', y='selfie_camera_mp')
+plt.xticks(rotation=90);
+
+"""Which attributes are highly correlated with the normalized price of a used device?
+Normalized_used_price is highly correlated with normalized_new_price and also slightly correlated with battery and main_camera_mp according to heat map. **bold text**
+"""
+
+# comparing the normalized_used_price with release_year of original data
+sns.scatterplot(data=data, x='normalized_used_price', y='release_year');
+
+# bivariate analysis of normalized_used_price with weight
+sns.scatterplot(data=data, x='normalized_used_price', y='weight');
+
+# bivariate analysis of normalized_new_price with release_year
+sns.scatterplot(data=data, x='normalized_new_price', y='release_year');
+
+# bivariate analysis of normalized_used_price with battery
+sns.scatterplot(data=data, x='normalized_used_price', y='battery');
+
+# bivariate analysis of normalized_used_price with main_camera_mp
+sns.scatterplot(data=data, x='normalized_used_price', y='main_camera_mp');
+
+# bivariate analysis of normalized_used_price with normalized_new_price
+sns.scatterplot(data=data, x='normalized_used_price', y='normalized_new_price');
+
+"""## Data Preprocessing
+
+- Missing value treatment
+- Feature engineering (if needed)
+- Outlier detection and treatment (if needed)
+- Preparing data for modeling
+- Any other preprocessing steps (if needed)
+
+Missing value treatment: it has been previously completed by replacing the missing values with median of the columns.
+
+**Feature Engineering:**
+"""
+
+# finding unique values of release_year column
+data['release_year'].unique()
+
+# copying the data into new variable
+df = data.copy()
+
+# drop the release year and instead used years since release with reference to specified year
+df['years_since_release'] = 2021 - data['release_year']
+df.drop('release_year', axis=1, inplace=True)
+
+# description of years since release
+df['years_since_release'].describe()
+
+"""**Outlier Check:**"""
+
+# plotting graphs to check for outliers
+num_cols = df.select_dtypes(include=np.number).columns.tolist()
+plt.figure(figsize=(15,15))
+
+for i, col in enumerate(num_cols):
+  plt.subplot(4,3,i+1)
+  sns.boxplot(data=df, x=col)
+  plt.tight_layout(pad=2);
+
+"""**Preparing Data for Modeling:**"""
+
+# splitting data
+X = df.drop('normalized_used_price', axis=1)
+y = df['normalized_used_price']
+
+X.head()
+
+y.head()
+
+# adding constant/intercept to feature matrix X
+X = sm.add_constant(X)
+
+# assigning dummy variables for object and catergory data types
+X = pd.get_dummies(
+    X,
+    columns=X.select_dtypes(include=['object', 'category']).columns.tolist(),
+    drop_first=True,
+)
+
+# splitting the data in to test and train
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.30, random_state=1)
+
+# changing the data type of train into float
+X_train = X.astype('float64')
+y_train = y.astype('float64')
+
+"""**Model Building - Linear_Regression:**"""
+
+# Model building to check the accuracy
+olsmodel = sm.OLS(y_train, X_train)
+lr_sm = olsmodel.fit()
+print(lr_sm.summary())
+
+"""## EDA
+
+- It is a good idea to explore the data once again after manipulating it.
+"""
+
+# plotting the data after splitting into test and train
+sns.boxplot(data=X_train, x='years_since_release')
+plt.xticks(rotation=90);
+
+# plotting int_memory
+sns.boxplot(data=X_train, x='int_memory');
+
+# plotting each columns after splitting
+sns.boxplot(data=X_train, x='normalized_new_price');
+
+# plotting columns after splitting
+sns.boxplot(data=X_train, x='weight');
+
+# plotting columns after splitting
+sns.boxplot(data=X_train, x='battery');
+
+# plotting collumns after splitting
+sns.boxplot(data=X_train, x='main_camera_mp');
+
+# plotting collumns after splitting
+sns.boxplot(data=X_train, x='selfie_camera_mp');
+
+# plotting collumns after splitting
+sns.boxplot(data=X_train, x='ram');
+
+# plotting collumns after splitting
+sns.boxplot(data=X_train, x='screen_size');
+
+# plotting collumns after splitting
+sns.boxplot(data=X_train, x='days_used');
+
+# plotting y train set for check normality
+sns.histplot(data=y_train, kde=True);
+
+"""## Model Performance Check
+
+We will check root mean squared error, r2, mean absolute percentage error and mean absolute error of the splitted data
+"""
+
+# function to compute adjusted R-squared
+def adj_r2_score(predictors, targets, predictions):
+    r2 = r2_score(targets, predictions)
+    n = predictors.shape[0]
+    k = predictors.shape[1]
+    return 1 - ((1 - r2) * (n - 1) / (n - k - 1))
+
+# Function to compute MAPE
+def mape_score(targets, predictions):
+    return np.mean(np.abs(targets - predictions) / targets) * 100
+
+# Function to compute different metrics to check performance of a regression model
+def model_performance_regression(model, predictors, target):
+    '''
+    model: regressor
+    predictors: independent variables
+    target: dependent variable
+    '''
+    # Predicting using the independent variables
+    pred = model.predict(predictors)
+
+    # Compute metrics
+    r2 = r2_score(target, pred)
+    adjr2 = adj_r2_score(predictors, target, pred)
+    rmse = np.sqrt(mean_squared_error(target, pred))
+    mae = mean_absolute_error(target, pred)
+    mape = mape_score(target, pred)
+
+    # Creating a dataframe of metrics
+    df_perf = pd.DataFrame({
+        'MAE': [mae],
+        'R-squared': [r2],
+        'Adj. R-squared': [adjr2],
+        'MAPE': [mape],
+        'RMSE': [rmse]
+    })
+
+    return df_perf
+
+# performance check for train and test data
+train_perf = model_performance_regression(lr_sm, X_train, y_train)
+test_perf = model_performance_regression(lr_sm, X_test, y_test)
+
+train_perf
+
+test_perf
+
+"""## Checking Linear Regression Assumptions
+
+- In order to make statistical inferences from a linear regression model, it is important to ensure that the assumptions of linear regression are satisfied.
+
+We will check the following:
+1. No multicollinearity
+2. Linearity of variables
+3. Independence of error terms
+4. Normality of error terms
+5. No heterosceasticity
+"""
+
+# Checking VIF
+def check_vif(predictors):
+    vif = pd.DataFrame()
+    vif['Features'] = predictors.columns
+    vif['VIF'] = [variance_inflation_factor(predictors.values, i) for i in range(predictors.shape[1])]
+    vif['VIF'] = round(vif['VIF'], 2)
+    vif = vif.sort_values(by = 'VIF', ascending = False)
+    return vif
+
+# checking vif of training data set
+check_vif(X_train)
+
+"""**Checking Multicollinearity: **
+1. Drop columns having VIF greater than 5
+2. Look at the adjusted r2 and rmse of all these models
+3. Drop the variable that makes the least change in adjusted r2
+4. Check the vif scores again
+5. Continue till you get all vif scores under 5
+"""
+
+# defining the function
+def treating_multicollinearity(predictors, target, high_vif_columns):
+  '''
+  Checking the effect of dropping the columns showing high multicollinearity
+  on model performance (adj. R-squared and RMSE)
+
+  predictors: independent variables
+  target: dependent variable
+  high_vif_columns: columns having high multicollinearity
+  '''
+  # empty lists to store adj. R-squared and RMSE values
+  adj_r2 = []
+  rmse = []
+
+  # build ols model by dropping one of the high vif columns at a time
+  # store the adj r2 and rmse in the lists defibed previously
+  for cols_in_vif in high_vif_columns:
+    #defining the new train set
+    train = predictors.loc[:, ~predictors.columns.str.startswith(cols)]
+
+    # create the model
+    model = sm.OLS(target, train).fit()
+
+    # adding adj. r2 and rmse to the lists
+    adj_r2.append(model.rsqaured_adj)
+    rmse.append(np.sqrt(mean_squared_error(target, model.predict(train))))
+
+    #creating a dataframe for the results
+    temp = pd.DataFrame({
+        'col': high_vif_columns,
+        'adj_r2': adj_r2,
+        'RMSE': rmse
+    }).sort_values(by='adj_r2', ascending=False)
+    temp.reset_index(drop=True, inplace=True)
+    return temp
+
+# dropping the columns having vif values greater than 5
+col_to_drop = ['screen_size','weight', 'brand_name']
+x_train2 = X_train.loc[:, ~X_train.columns.str.startswith(tuple(col_to_drop))]
+x_test2 = X_test.loc[:, ~X_test.columns.str.startswith(tuple(col_to_drop))]
+
+# checking vif now
+vif = check_vif(x_train2)
+vif
+
+"""**Check for high p_value:**
+
+We will drop the variables having p value greater than 0.05.
+- we will drop the columns having highest p value
+- create a new model, check the p value without dropping feature and then drop the columns with highest p value
+- Repeat the steps till there are no columns with high p value
+"""
+
+# copy the data of x train 2 as predictors
+predictors = x_train2.copy()
+cols = predictors.columns.tolist()
+
+#setting on initial max p_value
+max_p_value = 1
+
+while len(cols)>0:
+  #defining the train set
+  x_train_aux = predictors[cols]
+
+  # fitting the model
+  model = sm.OLS(y_train, x_train_aux).fit()
+
+  # getting the p_values and the max p_values
+  p_values = model.pvalues
+  max_p_value = max(p_values)
+
+  # name of the variables with max p values
+  feature_with_p_max = p_values.idxmax()
+
+  if max_p_value > 0.05:
+    cols.remove(feature_with_p_max)
+  else:
+      break
+
+selected_features = cols
+print(selected_features)
+
+# assign the variable to selected features of x train2 and test2
+x_train3 = x_train2[selected_features]
+x_test3 = x_test2[selected_features]
+
+# summarize the new assigned data set
+olsmodel2 = sm.OLS(y_train, x_train3)
+lr_sm2 = olsmodel2.fit()
+print(lr_sm2.summary())
+
+# checking performances of new train and test data set
+print('training preformance')
+train_perf2 = model_performance_regression(lr_sm2, x_train3, y_train)
+print(train_perf2)
+
+print('testing performance')
+test_perf2 = model_performance_regression(lr_sm2, x_test3, y_test)
+print(test_perf2)
+
+"""**Test for linearity and independence:**
+- We will test the linearity and independence by making a plot of fitted values vs residuals and check for patterns
+- If there is no pattern, then there is linearity and residuals are independent
+- otherwise, it is non-linear
+"""
+
+# assinging the data set with actual, fitted values and residuals
+df_pred = pd.DataFrame()
+
+df_pred['Actual Values'] = y_train
+df_pred['Fitted Values'] = lr_sm2.fittedvalues
+df_pred['Residuals'] = lr_sm2.resid
+
+df_pred.head()
+
+# Let's plot the fiited values vs residuals, if there is not pattern and we can say that model is linear
+sns.scatterplot(data=df_pred, x='Fitted Values', y='Residuals');
+
+"""**Test for Normality:**
+- If the curve shows normal distribution, they will make straight line
+- And the p value should be greater than 0.05 and if not then it does not follow normal distribution.
+- Sometimes, if the curve shows normal distribution as well as line plot shows normal distribution as well, we can overlook on shapiro's pvalue if by chance it comes less than 0.05
+"""
+
+# plotting graph to check normality
+sns.histplot(data=df_pred, x='Residuals', kde=True);
+
+# plotting graph to check the line alignment
+import pylab
+import scipy.stats as stats
+stats.probplot(df_pred['Residuals'], dist='norm', plot=pylab);
+
+# checking shapiro's p value for normality
+stats.shapiro(df_pred['Residuals'])
+
+"""**Test for Homoscedasticity:**
+- If p value is greater than 0.05, we can say that the residuals are homoscedastic
+"""
+
+# importing libraries to performn lzip
+import statsmodels.stats.api as sms
+from statsmodels.compat import lzip
+
+# Perform the Goldfeld-Quandt test
+test = sms.het_goldfeldquandt(df_pred['Residuals'], df_pred[['Fitted Values']])
+
+# defining name
+name = ['F statistic', 'p value']
+
+# The test function returns a tuple (F-statistic, p-value), so we use lzip to pair them with names
+results = lzip(name, test)
+
+# Print results
+print(results)
+
+"""## Final Model"""
+
+# checking the summary of final model
+olsmodel_final = sm.OLS(y_train, x_train3)
+lr_sm_final = olsmodel_final.fit()
+print(lr_sm_final.summary())
+
+# checking the perfomance of train and test data set of new model
+print('Training Performance')
+train_perf_final = model_performance_regression(lr_sm_final, x_train3, y_train)
+print(train_perf_final)
+
+print('Testing Performance')
+test_perf_final = model_performance_regression(lr_sm_final, x_test3, y_test)
+print(test_perf_final)
+
+"""## Actionable Insights and Recommendations
+
+**Actionble Insights:**
+
+1. The data contains maximum Android os
+2. Weight of device and battery are correlated with each other means high weight contains large battery as well as weight is directly correlated with normalized used price
+3. Release year and normalized used price are correlated to each other which means latest year of release will have increased used market value
+4. Normalized used price does not depend on how many days the device has been used
+5. Normalized used price is direclty proportional to normalized new price
+6. The very first model which was distributed in 70-30 ratio of train and test data showed r2 value of 0.845 and adj r2 value of 0.843
+7. Usually adj r2 value is lower than r2 value
+8. The RMSE value was 0.231 of train and 0.233 of test
+9. The MAE of train was 0.1804 and 0.1805 of test
+10. The MAPE of train was 4.33 and 4.38 of test
+11. The following columns contained greater than 5 VIF value: screen size, weight and brand name, all of which was dropped to reduce the multicollinearity
+12. Brand name column affected least in reducing the multicollinearity
+13. Weight column was the most important which highly affected in reducing the R2 value of the model and after dropping the column we saw reduction in r2 value which means it is important factor in predicting the price of used device
+14. The columns containing larger than 0.05 p value was dropped to reduce multicollinearity
+15. To check if the model meets all the assumptions of linear regression, graph of fitted values and residuals were plotted which showed no linearity which means its linear and independent
+16. To check the normality assumption, residuals histplot were plotted and it showed the normal distribution. Also, the line plot of residuals showed linear line plot which also says it is normally distributed. Lastly, shapiro's pvalue was checked and it was less then 0.05. However, if we have normal distribution curve with linear line plot, we can overlook shapiro's p-value. Hence, we can say that the model meets normality assumption
+17. If the Residuals and fitted value pvalue is greater 0.05 for homoscedasticity, we can say that Residuals are homoscedastic. In this project, we got p_value 0.99 which means residuals are uniform for all predicted values.
+18. After checking all assumptions and dropping higher vif and pvalue columns, final summary and performance check was done whose results are as follows:
+R2: 0.818, Adj R2: 0.825
+RMSE: Train - 0.251, Test - 0.250
+MAPE: Train - 4.702, Test - 4.717
+MAE: Train - 0.196, Test - 0.193
+
+Hence, concluded that the final model is less accurate than the previous model as it decreases the R2 and adj R2 as well as enhances RMSE, MAPE and MAE errors.
+
+
+**Recommendations:**
+
+1. Normalized used price is predicted on the factors which it is also directly proportional to such as normalized new price, battery, weight and release year.
+2. Normalized used price is not correlated to device usage.
+3. Brand name affects least to reduce the multicollinearity so we can keep it instead of dropping it.
+4. The final model showing reduced R2 and adj R2 which basically means it could be an overfit model as we have dropped too many columns from the data resulting in reduced accuracy of the model.
+5. The increase in errors means some of the dropped columns must have been crucial fot predicting the y value.
+6. The model meets almost all the assumptions of linear regression
+7. Weight columns which contained high vif was important for predicting the value of used device so it should not be dropped for reducing multicollinearity
+
+___
+"""
